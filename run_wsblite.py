@@ -13,7 +13,10 @@ COMMON_PACKAGE_NAME = IMPORT_PACKAGE_NAME + os.sep + 'common'
 
 def add_parser_arguments(arg_parser):
     arg_parser.add_argument('--port', '-p', type=int, default=9090)
-    
+    arg_parser.add_argument('--import_dir', '-i', type=str, default=IMPORT_PACKAGE_NAME)
+    arg_parser.add_argument('--common_dir', '-c', type=str, default=COMMON_PACKAGE_NAME)
+    arg_parser.add_argument('--log_config', '-l', type=str, default='logging.conf')
+
     return arg_parser
 
 def parse_command_line():
@@ -26,7 +29,10 @@ def expand_arguments(args, error_function):
     expanded_args = {}
              
     # Get args   
-    expanded_args['port']  = args.port
+    expanded_args['port']       = args.port
+    expanded_args['import_dir'] = args.import_dir
+    expanded_args['common_dir'] = args.common_dir
+    expanded_args['log_config'] = args.log_config
 
     return expanded_args
 
@@ -57,15 +63,16 @@ def import_web_services(import_from):
             
     return imported_web_services
         
-def main(port):
+def main(port, import_dir, common_dir, log_config):
     """ The main entry into running the web services. The command line hooks into
         this but other scripts can call this directly.
     """
-    logging.config.fileConfig('logging.conf')
+    if log_config:
+        logging.config.fileConfig('logging.conf')
     logging.info('Starting')
     
-    all_web_services = import_web_services(import_from=IMPORT_PACKAGE_NAME)
-    web_services_not_to_import = import_web_services(import_from=COMMON_PACKAGE_NAME)
+    all_web_services = import_web_services(import_from=import_dir)
+    web_services_not_to_import = import_web_services(import_from=common_dir)
     web_services_to_import = list(set(all_web_services) - set(web_services_not_to_import))
       
     controller = webservice_engine.WebServiceController(port, web_services_to_import)
