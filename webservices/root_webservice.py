@@ -1,7 +1,7 @@
 
 import logging
 
-from webservices.common.base_webservice import BaseWebService
+from webcommon.base_webservice import BaseWebService
 
 WEB_SERVICE_CONFIG = {BaseWebService.CONF_ITM_NAME: 'Root',
                          BaseWebService.CONF_ITM_ENABLED: 'true',

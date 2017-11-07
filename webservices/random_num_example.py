@@ -2,7 +2,7 @@
 import logging
 
 from random import randint
-from webservices.common.background_webservice import BaseWebService, BaseBackgroundWebService
+from webcommon.background_webservice import BaseWebService, BaseBackgroundWebService
 from time import sleep
 
 WEB_SERVICE_CONFIG = {BaseWebService.CONF_ITM_NAME: 'Random Number Generator', 

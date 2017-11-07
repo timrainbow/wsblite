@@ -2,7 +2,7 @@
 import os
 import logging
 
-from webservices.common.base_webservice import BaseWebService
+from webcommon.base_webservice import BaseWebService
 
 WEB_SERVICE_CONFIG = {BaseWebService.CONF_ITM_NAME: 'Example WebService',
                          BaseWebService.CONF_ITM_ENABLED: 'true',

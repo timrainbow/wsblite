@@ -7,15 +7,16 @@ import importlib
 import webservice_engine
 import logging.config
 
-IMPORT_PACKAGE_NAME = 'webservices'
-COMMON_PACKAGE_NAME = IMPORT_PACKAGE_NAME + os.sep + 'common'
+IMPORT_PACKAGE_NAME = 'webservices/'
+COMMON_PACKAGE_NAME = 'webcommon/'
+LOG_CONF_NAME       = 'logging.conf'
 
 
 def add_parser_arguments(arg_parser):
     arg_parser.add_argument('--port', '-p', type=int, default=9090)
-    arg_parser.add_argument('--import_dir', '-i', type=str, default=IMPORT_PACKAGE_NAME)
-    arg_parser.add_argument('--common_dir', '-c', type=str, default=COMMON_PACKAGE_NAME)
-    arg_parser.add_argument('--log_config', '-l', type=str, default='logging.conf')
+    arg_parser.add_argument('--import_dir', '-i', type=str)
+    arg_parser.add_argument('--common_dir', '-c', type=str)
+    arg_parser.add_argument('--log_config', '-l', type=str)
 
     return arg_parser
 
@@ -27,12 +28,25 @@ def parse_command_line():
 
 def expand_arguments(args, error_function):
     expanded_args = {}
-             
-    # Get args   
-    expanded_args['port']       = args.port
-    expanded_args['import_dir'] = args.import_dir
-    expanded_args['common_dir'] = args.common_dir
-    expanded_args['log_config'] = args.log_config
+    
+    script_dir = os.path.dirname(__file__)
+    
+    if args.import_dir:
+        expanded_args['import_dir'] = os.path.abspath(args.import_dir)
+    else:
+        expanded_args['import_dir'] = os.path.abspath(os.path.join(script_dir, IMPORT_PACKAGE_NAME))
+        
+    if args.common_dir:
+        expanded_args['common_dir'] = os.path.abspath(args.common_dir)
+    else:
+        expanded_args['common_dir'] = os.path.abspath(os.path.join(script_dir, COMMON_PACKAGE_NAME))
+        
+    if args.log_config:
+        expanded_args['log_config'] = os.path.abspath(args.log_config)
+    else:
+        expanded_args['log_config'] = os.path.abspath(os.path.join(script_dir, LOG_CONF_NAME))
+              
+    expanded_args['port'] = args.port
 
     return expanded_args
 
@@ -42,7 +56,19 @@ def import_web_services(import_from):
         'WebService'.
     """
     imported_web_services = list()
+    
+    if not import_from:
+        logging.error('Cannot import from directory as path given is empty')
+        return imported_web_services
+    elif import_from[-1:] != os.sep:
+        # Path needs to have a slash on the end which is sometimes missing
+        import_from += os.sep
+    
     web_services_to_import = os.listdir(import_from)
+    
+    # import the containing package first
+    import_package = os.path.basename(os.path.dirname(import_from))
+    importlib.import_module(import_package)
 
     for web_service in web_services_to_import:
         logging.debug('Trying ' + str(web_service))
@@ -51,8 +77,10 @@ def import_web_services(import_from):
             continue
         # Remove the .py extension
         web_service = web_service[:-3]
-        to_import = import_from.replace(os.sep, '.') + "." + web_service
-        mod = importlib.import_module(to_import)
+        to_import = '.' + web_service
+        
+        logging.debug('Importing: ' + to_import + ' From Package: ' + import_package)
+        mod = importlib.import_module(to_import, import_package)
         module_attributes = dir(mod)
         for attr in module_attributes:
             if not attr.endswith('WebService'):
@@ -68,8 +96,23 @@ def main(port, import_dir, common_dir, log_config):
         this but other scripts can call this directly.
     """
     if log_config:
-        logging.config.fileConfig('logging.conf')
+        logging.config.fileConfig(log_config)
+    if not import_dir:
+        # import webservices from the directory above
+        import_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 
+                                  IMPORT_PACKAGE_NAME)
+        if import_dir[-1:] != os.sep:
+            import_dir += os.sep
+    if not common_dir:
+        common_dir = os.path.join(os.path.dirname(__file__), COMMON_PACKAGE_NAME)
+        
+        
     logging.info('Starting')
+    
+    logging.debug('Import Directory: ' + import_dir)
+    logging.debug('Common Directory: ' + common_dir)
+    logging.debug('Log Config: ' + log_config)
+    logging.debug('Port: ' + str(port) )
     
     all_web_services = import_web_services(import_from=import_dir)
     web_services_not_to_import = import_web_services(import_from=common_dir)

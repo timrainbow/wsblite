@@ -5,7 +5,7 @@ import queue
 import logging
 
 from time import sleep
-from webservices.common.base_webservice import BaseWebService
+from webcommon.base_webservice import BaseWebService
 
 
 class BaseBackgroundWebService(BaseWebService):

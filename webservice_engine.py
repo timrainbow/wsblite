@@ -4,7 +4,9 @@ import os
 import logging
 
 from threading import Thread
-from webservices.common.base_webservice import BaseWebService, HTTPStatus
+#from webservices.common.base_webservice import BaseWebService, HTTPStatus
+from webcommon.base_webservice import BaseWebService, HTTPStatus
+
 
 class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     """ The HTTPRequestHandler acts as the view to the client's requests and is
