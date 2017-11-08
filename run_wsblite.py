@@ -3,13 +3,48 @@
 import argparse
 import os
 import importlib
-
+import signal
 import webservice_engine
 import logging.config
+
+from time import sleep
 
 IMPORT_PACKAGE_NAME = 'webservices/'
 COMMON_PACKAGE_NAME = 'webcommon/'
 LOG_CONF_NAME       = 'logging.conf'
+
+class GracefulInterruptHandler(object):
+    def __init__(self, sig=signal.SIGTERM):
+        self.sig = sig
+
+    def __enter__(self):
+
+        self.interrupted = False
+        self.released = False
+
+        self.original_handler = signal.getsignal(self.sig)
+
+        def handler(signum, frame):
+            self.release()
+            self.interrupted = True
+
+        signal.signal(self.sig, handler)
+
+        return self
+
+    def __exit__(self, type, value, tb):
+        self.release()
+
+    def release(self):
+
+        if self.released:
+            return False
+
+        signal.signal(self.sig, self.original_handler)
+
+        self.released = True
+
+        return True
 
 
 def add_parser_arguments(arg_parser):
@@ -17,6 +52,7 @@ def add_parser_arguments(arg_parser):
     arg_parser.add_argument('--import_dir', '-i', type=str)
     arg_parser.add_argument('--common_dir', '-c', type=str)
     arg_parser.add_argument('--log_config', '-l', type=str)
+    arg_parser.add_argument('--system_run', '-s', action="store_true")
 
     return arg_parser
 
@@ -46,7 +82,8 @@ def expand_arguments(args, error_function):
     else:
         expanded_args['log_config'] = os.path.abspath(os.path.join(script_dir, LOG_CONF_NAME))
               
-    expanded_args['port'] = args.port
+    expanded_args['port']       = args.port
+    expanded_args['system_run'] = args.system_run
 
     return expanded_args
 
@@ -91,7 +128,7 @@ def import_web_services(import_from):
             
     return imported_web_services
         
-def main(port, import_dir, common_dir, log_config):
+def main(port, import_dir, common_dir, log_config, system_run):
     """ The main entry into running the web services. The command line hooks into
         this but other scripts can call this directly.
     """
@@ -119,20 +156,32 @@ def main(port, import_dir, common_dir, log_config):
     web_services_to_import = list(set(all_web_services) - set(web_services_not_to_import))
       
     controller = webservice_engine.WebServiceController(port, web_services_to_import)
-    try:
-        controller.start()
-        # TODO: The 'wait for user to interrupt' logic should be moved to the command_line_run
-        input('\nPress ENTER to exit...\n\n')
-    except (KeyboardInterrupt, EOFError):
-        pass
-    finally:
-        controller.stop()
+    controller.start()
+    
+    return controller
 
 def command_line_run():
     """ Parses the command line before passing the arguments to the main function.
     """
     args, error_function = parse_command_line()
-    main(**expand_arguments(args, error_function))
+    
+    try:
+        controller = main(**expand_arguments(args, error_function))
+        if args.system_run:
+            logging.info('Running...')
+            with GracefulInterruptHandler() as signal_handler:
+                while controller.is_server_running():
+                    sleep(1)
+                    if signal_handler.interrupted:
+                        logging.info('Received kill command, attempting graceful shutdown')
+                        break
+        else:
+            input('\nPress ENTER to exit...\n\n')
+    except (KeyboardInterrupt, EOFError):
+        pass
+    finally:
+        controller.stop()
+        
     logging.info('Exiting...')
     
 if __name__ == '__main__':

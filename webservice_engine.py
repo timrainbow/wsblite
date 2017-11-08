@@ -151,6 +151,9 @@ class WebServiceController(object):
     def is_server_running(self):
         return self.__server_thread.isAlive()
     
+    def wait_here_until_server_thread_stops(self):
+        self.__server_thread.join()
+    
     def parse_response(self, raw_response):
         return self.__server.RequestHandlerClass.parse_response(raw_response)
     
