@@ -135,12 +135,14 @@ def main(port, import_dir=None, common_dir=None, log_config=None, system_run=Tru
         logging.config.fileConfig(log_config)
     else:
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+
     if not import_dir:
         # import webservices from the directory above
         import_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 
                                   IMPORT_PACKAGE_NAME)
         if import_dir[-1:] != os.sep:
             import_dir += os.sep
+
     if not common_dir:
         common_dir = os.path.join(os.path.dirname(__file__), COMMON_PACKAGE_NAME)
 
@@ -150,7 +152,8 @@ def main(port, import_dir=None, common_dir=None, log_config=None, system_run=Tru
     logging.info('Starting')
     logging.debug('Import Directory: ' + import_dir)
     logging.debug('Common Directory: ' + common_dir)
-    logging.debug('Log Config: ' + log_config)
+    if log_config:
+        logging.debug('Log Config: ' + log_config)
     logging.debug('Port: ' + str(port) )
     
     all_web_services = import_web_services(import_from=import_dir)
