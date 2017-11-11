@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import sys
 import os
 import importlib
 import signal
@@ -140,8 +141,10 @@ def main(port, import_dir, common_dir, log_config, system_run):
             import_dir += os.sep
     if not common_dir:
         common_dir = os.path.join(os.path.dirname(__file__), COMMON_PACKAGE_NAME)
-        
-        
+
+    # Need to add the directory above the import directory to the path
+    sys.path.insert(0, os.path.dirname(import_dir))
+   
     logging.info('Starting')
     
     logging.debug('Import Directory: ' + import_dir)
