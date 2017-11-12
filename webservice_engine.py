@@ -4,7 +4,6 @@ import os
 import logging
 
 from threading import Thread
-#from webservices.common.base_webservice import BaseWebService, HTTPStatus
 from webcommon.base_webservice import BaseWebService, HTTPStatus
 
 
