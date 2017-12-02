@@ -169,6 +169,8 @@ def command_line_run():
     """ Parses the command line before passing the arguments to the main function.
     """
     args, error_function = parse_command_line()
+
+    controller = None
     
     try:
         controller = main(**expand_arguments(args, error_function))
@@ -185,7 +187,8 @@ def command_line_run():
     except (KeyboardInterrupt, EOFError):
         pass
     finally:
-        controller.stop()
+        if controller:
+            controller.stop()
         
     logging.info('Exiting...')
     
