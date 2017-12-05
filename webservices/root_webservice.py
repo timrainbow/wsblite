@@ -22,7 +22,7 @@ class RootWebService(BaseWebService):
         super().__init__(WEB_SERVICE_CONFIG)
         self.links = list()
     
-    def perform_client_request(self, method, path, payload_type, payload_content):
+    def perform_client_request(self, method, path, headers, payload_type, payload_content):
         return self.ServiceResponse(payload='<br>'.join(self.links))
     
     def initialise(self, web_service_lookup):

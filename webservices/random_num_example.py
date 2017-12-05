@@ -75,7 +75,7 @@ class RandomNumWebService(BaseBackgroundWebService):
         super().__init__(WEB_SERVICE_CONFIG, self.RandomNumBackgroundProcess)
     
     
-    def perform_client_request(self, method, path, payload_type, payload_content):
+    def perform_client_request(self, method, path, headers, payload_type, payload_content):
         """ When a client requests for a random number, we inform the background
             process of this request and block until we get the result for the 
             client. We pass a message to the background process so it knows what

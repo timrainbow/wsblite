@@ -51,7 +51,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 logging.info('Client requested favicon but nothing found here: ' + favicon_path)
         else:
             
-            result = controller.perform_client_request('GET', self.path)
+            result = controller.perform_client_request('GET', self.path, self.headers)
             self.__handle_result(result)
             
     def do_POST(self):
@@ -60,7 +60,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         (payload_type, payload_content) = self.get_payload()
         
         controller = HTTPRequestHandler.controller
-        result = controller.perform_client_request('POST', self.path, payload_type, 
+        result = controller.perform_client_request('POST', self.path, self.headers, payload_type,
                                                    payload_content)
         self.__handle_result(result)
         
@@ -70,7 +70,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         (payload_type, payload_content) = self.get_payload()
         
         controller = HTTPRequestHandler.controller
-        result = controller.perform_client_request('PUT', self.path, payload_type, 
+        result = controller.perform_client_request('PUT', self.path, self.headers, payload_type,
                                                    payload_content)
         self.__handle_result(result)
         
@@ -78,7 +78,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         """ Serves a DELETE request.
         """
         controller = HTTPRequestHandler.controller
-        result = controller.perform_client_request('DELETE', self.path)
+        result = controller.perform_client_request('DELETE', self.path, self.headers)
         self.__handle_result(result)
         
             
@@ -95,7 +95,11 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         if service_resp.payload:
             self.send_header("Content-type", service_resp.content_type)
             self.send_header("Content-Length", len(service_resp.payload))
-            
+
+        # Send any additional headers the user has specifically requested.
+        for header_key, header_value in service_resp.add_headers.items():
+            self.send_header(header_key, header_value)
+
         self.end_headers()
         
         self.wfile.write(service_resp.payload)
@@ -156,7 +160,7 @@ class WebServiceController(object):
     def parse_response(self, raw_response):
         return self.__server.RequestHandlerClass.parse_response(raw_response)
     
-    def perform_client_request(self, method, path, payload_type=None, payload_content=None):
+    def perform_client_request(self, method, path, headers, payload_type=None, payload_content=None):
         """ Called when the HTTPRequestHandler receives a request from a client.
             This is where the controller looks to see which web service should
             handle the client's request. 
@@ -165,9 +169,20 @@ class WebServiceController(object):
         web_service_candidates = self._web_service_lookup[method]
         if path in web_service_candidates:
             selected_web_service = web_service_candidates[path]
-            return selected_web_service.perform_client_request(method, path,
-                                                                payload_type, 
-                                                                payload_content)
+
+
+            if selected_web_service.auth_all_enabled:
+                auth_passed = selected_web_service.check_authentication(method, path, headers)
+            else:
+                logging.info('Authentication is disabled for all owned urls for: ' + selected_web_service.service_name)
+                auth_passed = True
+
+            if not auth_passed:
+                return selected_web_service.request_authentication(realm=selected_web_service.service_name)
+
+            return selected_web_service.perform_client_request(method, path, headers,
+                                                               payload_type,
+                                                               payload_content)
         else:
             return BaseWebService.ServiceResponse(resp_code=HTTPStatus.NOT_FOUND)
 

@@ -1,4 +1,6 @@
 
+import logging
+import base64
 from http import HTTPStatus
 
 class BaseWebService(object):
@@ -59,8 +61,15 @@ class BaseWebService(object):
     # Configuration item keys used to drill down into the WebService config.
     CONF_ITM_NAME       = 'service_name'
     CONF_ITM_OWNED_URLS = 'owned_urls'
-    CONF_ITM_ENABLED    = 'enabled'
+    CONF_ITM_ENABLED    = 'service_enabled'
     CONF_ITM_ALLOW_METH = 'allowed_methods'
+
+    # Auth config items
+    CONF_ITM_AUTH_ALL_ENABLED    = 'auth_all_enabled'
+
+    CONF_ITM_AUTH_BASIC_ENABLED  = 'auth_basic_enabled'
+    CONF_ITM_AUTH_USERNAME       = 'auth_username'
+    CONF_ITM_AUTH_PASSWORD       = 'auth_password'
     
     def __init__(self, web_service_config):
         self.__web_service_config = web_service_config
@@ -79,6 +88,17 @@ class BaseWebService(object):
         self.service_name = config[self.CONF_ITM_NAME]
         
         self.owned_urls = config[self.CONF_ITM_OWNED_URLS]
+
+        # Authentication
+        if self.CONF_ITM_AUTH_ALL_ENABLED in config:
+            if config[self.CONF_ITM_AUTH_ALL_ENABLED].lower() == 'true':
+                self.auth_all_enabled = True
+            else:
+                self.auth_all_enabled = False
+        else:
+            # Default to enabled to honour auth info if entered for a given owned url
+            self.auth_all_enabled = True
+
         
     def initialise(self, web_service_lookup):
         """ This method is called just before the start method. The lookup created
@@ -107,9 +127,15 @@ class BaseWebService(object):
         """
         return None
 
+    def request_authentication(self, realm):
+        """ Populate a response to send back to the client requesting authentication details to proceed.
+        """
+        headers_to_add = {'WWW-Authenticate': 'Basic realm="' + realm + '"'}
+        return self.ServiceResponse(resp_code=HTTPStatus.UNAUTHORIZED, add_headers=headers_to_add)
+
 #     
     def get_allowed_http_methods(self):
-        """ Creates a dictionary holding the HTTP methods as keys with a list 
+        """ Creates a dictionary holding the HTTP methods as keys with a list
             of url paths that this WebService owns as values.
         """
         allowed_http_methods = { 'GET' : list(), 'POST' : list(), 'PUT' : list(), 'DELETE' : list() }
@@ -121,6 +147,63 @@ class BaseWebService(object):
         
         return allowed_http_methods
 
-    
-    
+
+    def check_authentication(self, method, path, headers):
+        """ Checks if the particular url owned by this web service requires authentication or not. If it does, it will
+            check the Authorization header against the stored username and password. Returns True if the client validated
+            (either by supplying the right credentials or if authentication is disabled for the url being accessed).
+        """
+        logging.debug('Verifying authentication requirements of owned urls are met')
+
+        url_config = self.owned_urls[path]
+
+        check_credentials = True
+
+        if self.CONF_ITM_AUTH_BASIC_ENABLED in url_config:
+            if url_config[self.CONF_ITM_AUTH_BASIC_ENABLED].lower() == 'true':
+                check_credentials = True
+            else:
+                # Auth specifically disabled in config for this path
+                check_credentials = False
+        elif self.CONF_ITM_AUTH_USERNAME in url_config and self.CONF_ITM_AUTH_PASSWORD in url_config:
+            if url_config[self.CONF_ITM_AUTH_USERNAME] and url_config[self.CONF_ITM_AUTH_PASSWORD]:
+                logging.debug('Authentication not specifically enabled but a username and password have been supplied - '
+                             'assuming authentication required (provide ' + self.CONF_ITM_AUTH_BASIC_ENABLED + ' to '
+                             'silence this message)')
+                check_credentials = True
+        else:
+            check_credentials = False
+
+        auth_passed = False
+        if check_credentials:
+            logging.debug('Authentication required')
+            auth_header = headers.get('Authorization')
+            if auth_header:
+                encoded_credentials = self.get_encoded_auth_credentials(path)
+                if 'Basic ' + encoded_credentials == auth_header:
+                    logging.info('Authentication passed')
+                    auth_passed =  True
+                else:
+                    logging.info('Authentication failed - wrong username or password')
+                    return False
+            else:
+                auth_passed = False
+        else:
+            logging.debug('Authentication not needed')
+            auth_passed = True
+
+        return auth_passed
+
+    def get_encoded_auth_credentials(self, path):
+        """ Returns the credentials encoded for basic web authentication i.e. Basic username:password (as base64 encoded)
+        """
+        url_config = self.owned_urls[path]
+
+        username = url_config[self.CONF_ITM_AUTH_USERNAME]
+        password = url_config[self.CONF_ITM_AUTH_PASSWORD]
+
+        credentials = username + ':' + password
+
+        return base64.b64encode(credentials.encode()).decode()
+
     
