@@ -132,8 +132,7 @@ class BaseWebService(object):
         """
         headers_to_add = {'WWW-Authenticate': 'Basic realm="' + realm + '"'}
         return self.ServiceResponse(resp_code=HTTPStatus.UNAUTHORIZED, add_headers=headers_to_add)
-
-#     
+     
     def get_allowed_http_methods(self):
         """ Creates a dictionary holding the HTTP methods as keys with a list
             of url paths that this WebService owns as values.
