@@ -8,13 +8,14 @@ WEB_SERVICE_CONFIG = {BaseWebService.CONF_ITM_NAME: 'Example WebService',
                       BaseWebService.CONF_ITM_ENABLED: 'true',
                       BaseWebService.CONF_ITM_OWNED_URLS:
                           {'/list_directory':
+                              {BaseWebService.CONF_ITM_ALLOW_METH : ['GET']},
+                           '/list_directory_with_authentication':
                               {BaseWebService.CONF_ITM_ALLOW_METH : ['GET'],
                                BaseWebService.CONF_ITM_AUTH_BASIC_ENABLED: 'true',
-                               BaseWebService.CONF_ITM_AUTH_USERNAME: 'username',
-                               BaseWebService.CONF_ITM_AUTH_PASSWORD: 'password'
+                               BaseWebService.CONF_ITM_AUTH_USERNAME: 'admin',
+                               BaseWebService.CONF_ITM_AUTH_PASSWORD: 'MySecretPassword'
                               }
-                          },
-                     BaseWebService.CONF_ITM_AUTH_ALL_ENABLED: 'false'
+                          }
                      }
 
 
@@ -32,8 +33,9 @@ class ListDirWebService(BaseWebService):
         super().__init__(WEB_SERVICE_CONFIG)
     
     def perform_client_request(self, method, path, headers, payload_type, payload_content):
-        """ Return the contents of the current working directory when a client 
-            request comes in for a url path we registered for.
+        """ Return the contents of the current working directory when a client request comes in for a url path we
+            registered for. Authentication is verified before this method is called if the client chose the
+            authentication option.
         """
         response = "<h1>Contents of current working directory:</h1>"
         response += '<br>'.join(os.listdir(os.curdir))

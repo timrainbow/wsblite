@@ -120,7 +120,7 @@ class BaseWebService(object):
         """
         pass
     
-    def perform_client_request(self, method, path, payload_type, payload_content):
+    def perform_client_request(self, method, path, headers, payload_type, payload_content):
         """ Called when a client performs a request with a url path that matches
             the one this WebService registered. The HTTP method used by the client
             must also match the allowed methods by this WebService.

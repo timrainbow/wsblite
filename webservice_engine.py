@@ -136,7 +136,7 @@ class WebServiceController(object):
         for web_service in self._loaded_web_services:
             # Initialise all services to make them aware of other services
             # running before they are actually started.
-            web_service.initialise(self._web_service_lookup)
+            web_service.initialise(self._loaded_web_services)
             
         for web_service in self._loaded_web_services:
             web_service.start()

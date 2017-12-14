@@ -20,23 +20,30 @@ class RootWebService(BaseWebService):
     
     def __init__(self):
         super().__init__(WEB_SERVICE_CONFIG)
-        self.links = list()
+        self.html_body = ''
     
     def perform_client_request(self, method, path, headers, payload_type, payload_content):
-        return self.ServiceResponse(payload='<br>'.join(self.links))
+        return self.ServiceResponse(payload=self.html_body)
     
-    def initialise(self, web_service_lookup):
+    def initialise(self, web_services_loaded):
         """ At initialisation we get a sneaky look at other web services running
             so this is when we will create links to them ready for when the client
-            requests
+            requests the root url.
         """
-        for url, web_service in web_service_lookup['GET'].items():
-            link = '<a href="' + url + '">' + web_service.service_name  +'</a>'
-            self.links.append(link)
+        for web_service in web_services_loaded:
+            if web_service.service_name == self.service_name:
+                # We don't want to provide a link to ourself (the root url), so skip to the next web service.
+                continue
+
+            self.html_body += '<h2>' + web_service.service_name + '</h2><ul>'
+            for owned_url in web_service.get_allowed_http_methods()['GET']:
+                self.html_body += '<li><a href="' + owned_url + '">' + owned_url  +'</a><br></li>'
+            self.html_body += '</ul>'
+
     
     def start(self):
         logging.info('RootWebService Start')
-        logging.info(self.links)
+        logging.info(self.html_body)
     
     def stop(self):
         logging.info('RootWebService Stop')
