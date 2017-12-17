@@ -24,9 +24,11 @@ class BaseBackgroundWebService(BaseWebService):
         """
         def __init__(self, receive_queue, send_queue):
             super().__init__()
+            
+            self.exit_flag        = multiprocessing.Event()
+            
             self.__receive_queue  = receive_queue
             self.__send_queue     = send_queue
-            self.__exit_flag      = multiprocessing.Event()
             self.__worker_process = threading.Thread(target=self.main_loop)
     
         def run(self):
@@ -40,7 +42,7 @@ class BaseBackgroundWebService(BaseWebService):
             
             self.__worker_process.start()
             
-            while not self.__exit_flag.is_set():
+            while not self.exit_flag.is_set():
                 self.wait_for_request()
                     
             
@@ -54,7 +56,7 @@ class BaseBackgroundWebService(BaseWebService):
                 work of background process.
             """
             logging.debug('WorkerProcess Starting')
-            while not self.__exit_flag.is_set():
+            while not self.exit_flag.is_set():
                 self.loop()
             logging.debug('WorkerProcess Exiting')
                 
@@ -89,21 +91,25 @@ class BaseBackgroundWebService(BaseWebService):
                 on the background process.  
             """
             return None
-            
-            
+        
         def stop(self):
+            """ Overload this method to be notified when the background process
+                should end.
+            """
+            pass
+            
+            
+        def shutdown(self):
             """ Attempts to stop the background process. If it takes too long
                 or it is blocking and therefore will never exit, the process is
                 terminated. You should not overload this method.
             """
-            self.__exit_flag.set()
-            
-            sleep(1)
+            self.exit_flag.set()
+            self.stop()
+            self.__worker_process.join(2)
             if self.__worker_process.is_alive():
-                sleep(3)
-                if self.__worker_process.is_alive():
-                    logging.debug('Worker process forced kill')
-                    self.__worker_process.terminate()
+                logging.debug('Worker process forced kill')
+                self.__worker_process.terminate()
     
     
     
@@ -169,8 +175,8 @@ class BaseBackgroundWebService(BaseWebService):
             takes too long stopping the worker thread.
         """
         logging.info('BaseBackgroundWebService Stop')
-        self._background_process.stop()
-        sleep(2)
+        self._background_process.shutdown()
+        self._background_process.join(3)
         if self._background_process.is_alive():
             logging.info('Background process forced killed')
             self._background_process.terminate()
