@@ -102,11 +102,12 @@ class BaseBackgroundWebService(BaseWebService):
         def shutdown(self):
             """ Attempts to stop the background process. If it takes too long
                 or it is blocking and therefore will never exit, the process is
-                terminated. You should not overload this method.
+                terminated. You should not overload this method (overload stop
+                instead).
             """
             self.exit_flag.set()
             self.stop()
-            self.__worker_process.join(2)
+            sleep(2)
             if self.__worker_process.is_alive():
                 logging.debug('Worker process forced kill')
                 self.__worker_process.terminate()
