@@ -67,6 +67,9 @@ class BaseBackgroundWebService(BaseWebService):
 
             while not self.exit_flag.is_set():
                 self.loop()
+
+            self.deinitialise()
+
             logging.debug('WorkerProcess Exiting')
                 
         def loop(self):
@@ -75,6 +78,12 @@ class BaseBackgroundWebService(BaseWebService):
                 It is fine if the work you need to carry out blocks (so it doesn't
                 exit from this method) but this may cause it to be terminated 
                 with no notice on exit. 
+            """
+            pass
+
+        def deinitialise(self):
+            """ Override this method if your BackgroundProcess needs to release any
+                resources before it exits.
             """
             pass
             

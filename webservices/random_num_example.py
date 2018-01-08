@@ -61,6 +61,11 @@ class RandomNumWebService(BaseBackgroundWebService):
             logging.info("Latest random number: " + str(self.__random_number_generated))
             sleep(5)
 
+        def deinitialise(self):
+            """ Any resources owned can be released here before the process exits
+            """
+            self.__random_number_generated = 0
+
 
         def handle_request(self, message_received):
             """ This is called indirectly when the WebService makes a request
