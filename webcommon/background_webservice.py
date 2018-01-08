@@ -49,6 +49,12 @@ class BaseBackgroundWebService(BaseWebService):
             self.__worker_process.join(2)
             
             logging.debug('BaseBackgroundProcess Exiting')
+
+        def initialise(self):
+            """ Override this method if your BackgroundProcess needs to carry out setup
+                or initialise data before the main_loop call.
+            """
+            pass
             
         def main_loop(self):
             """ Handles the stopping of the background process cleanly - you should 
@@ -56,12 +62,15 @@ class BaseBackgroundWebService(BaseWebService):
                 work of background process.
             """
             logging.debug('WorkerProcess Starting')
+
+            self.initialise()
+
             while not self.exit_flag.is_set():
                 self.loop()
             logging.debug('WorkerProcess Exiting')
                 
         def loop(self):
-            """ This method is called over and over so overload this method 
+            """ This method is called over and over so override this method
                 with the actual work you need to carry out alongside the WebService.
                 It is fine if the work you need to carry out blocks (so it doesn't
                 exit from this method) but this may cause it to be terminated 

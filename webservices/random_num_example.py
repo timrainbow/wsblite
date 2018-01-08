@@ -5,10 +5,10 @@ from random import randint
 from webcommon.background_webservice import BaseWebService, BaseBackgroundWebService
 from time import sleep
 
-WEB_SERVICE_CONFIG = {BaseWebService.CONF_ITM_NAME: 'Random Number Generator', 
+WEB_SERVICE_CONFIG = {BaseWebService.CONF_ITM_NAME: 'Random Number Generator',
                          BaseWebService.CONF_ITM_ENABLED: 'true',
-                         BaseWebService.CONF_ITM_OWNED_URLS: 
-                             {'/random_number': 
+                         BaseWebService.CONF_ITM_OWNED_URLS:
+                             {'/random_number':
                                  {BaseWebService.CONF_ITM_ALLOW_METH : ['GET']}
                              }
                      }
@@ -28,21 +28,28 @@ class RandomNumWebService(BaseBackgroundWebService):
         This example generates a random number from 1-100 every few seconds and 
         the latest result is returned to the client on request. 
     """
-    
+
     class RandomNumBackgroundProcess(BaseBackgroundWebService.BaseBackgroundProcess):
         """ Example background process to carry out work without requiring 
             a client's request first. Your background process should inherit
             from BaseBackgroundProcess.
         """
-        
+
         # This is the message we pass from the WebService to the background process.
         REQUEST_RANDOM_NUM = 'latest_random_number'
-        
+
         def __init__(self, receive_queue, send_queue):
             super().__init__(receive_queue, send_queue)
-             
+
+            self.__random_number_generated = None
+
+
+        def initialise(self):
+            """ Any setup work or initialising member variables needs to happen in
+                this method.
+            """
             self.__random_number_generated = 0
-        
+
         def loop(self):
             """ This method generates a new random number and is called as soon
                 as it exits. Allowing the method to exit before it is re-called
@@ -53,8 +60,8 @@ class RandomNumWebService(BaseBackgroundWebService):
             self.__random_number_generated = randint(1, 100)
             logging.info("Latest random number: " + str(self.__random_number_generated))
             sleep(5)
-            
-            
+
+
         def handle_request(self, message_received):
             """ This is called indirectly when the WebService makes a request
                 to this background process. Here we check that the request is
@@ -64,17 +71,17 @@ class RandomNumWebService(BaseBackgroundWebService):
                 return self.__random_number_generated
             else:
                 return None
-            
 
-    
+
+
     def __init__(self):
         """ When we __init__ in a subclass derived from BaseBackgroundWebService,
             we must pass the background process class we intend to run. This
             class should inherit from BaseBackgroundProcess.
         """
         super().__init__(WEB_SERVICE_CONFIG, self.RandomNumBackgroundProcess)
-    
-    
+
+
     def perform_client_request(self, method, path, headers, payload_type, payload_content):
         """ When a client requests for a random number, we inform the background
             process of this request and block until we get the result for the 
@@ -86,6 +93,5 @@ class RandomNumWebService(BaseBackgroundWebService):
         answer = self.request(self.RandomNumBackgroundProcess.REQUEST_RANDOM_NUM)
 
         return self.ServiceResponse(payload=str(answer))
-    
-    
-    
+
+
