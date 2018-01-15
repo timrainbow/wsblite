@@ -1,6 +1,7 @@
 
 import logging
 import base64
+import os
 from http import HTTPStatus
 
 class BaseWebService(object):
@@ -142,19 +143,17 @@ class BaseWebService(object):
             allowed_for_this_url = url_config[self.CONF_ITM_ALLOW_METH]
             for http_method in allowed_for_this_url:
                 allowed_http_methods[http_method].append(url)
-            
-        
+
         return allowed_http_methods
 
-
-    def check_authentication(self, method, path, headers):
+    def check_authentication(self, path, headers):
         """ Checks if the particular url owned by this web service requires authentication or not. If it does, it will
             check the Authorization header against the stored username and password. Returns True if the client validated
             (either by supplying the right credentials or if authentication is disabled for the url being accessed).
         """
         logging.debug('Verifying authentication requirements of owned urls are met')
 
-        url_config = self.owned_urls[path]
+        url_config = self.__get_url_config(path)
 
         check_credentials = True
 
@@ -196,7 +195,7 @@ class BaseWebService(object):
     def get_encoded_auth_credentials(self, path):
         """ Returns the credentials encoded for basic web authentication i.e. Basic username:password (as base64 encoded)
         """
-        url_config = self.owned_urls[path]
+        url_config = self.__get_url_config(path)
 
         username = url_config[self.CONF_ITM_AUTH_USERNAME]
         password = url_config[self.CONF_ITM_AUTH_PASSWORD]
@@ -205,4 +204,13 @@ class BaseWebService(object):
 
         return base64.b64encode(credentials.encode()).decode()
 
-    
+    def __get_url_config(self, path):
+        """ Gets the url config for a given url path. If the exact path doesn't match then the closest web service to it
+            is returned - if it contains a higher level path.
+        """
+        if path in self.owned_urls:
+            return self.owned_urls[path]
+        elif path != '/':
+            return self.__get_url_config(os.path.dirname(path))
+        else:
+            return None

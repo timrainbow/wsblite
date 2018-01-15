@@ -165,14 +165,16 @@ class WebServiceController(object):
             This is where the controller looks to see which web service should
             handle the client's request. 
         """
-        
-        web_service_candidates = self._web_service_lookup[method]
-        if path in web_service_candidates:
-            selected_web_service = web_service_candidates[path]
 
+        while path != '/' and path[-1:] == '/':
+            # Remove trailing slashes
+            path = path[:-1]
 
+        selected_web_service = self.__get_web_service_that_owns_path(path, self._web_service_lookup[method])
+
+        if selected_web_service:
             if selected_web_service.auth_all_enabled:
-                auth_passed = selected_web_service.check_authentication(method, path, headers)
+                auth_passed = selected_web_service.check_authentication(path, headers)
             else:
                 logging.info('Authentication is disabled for all owned urls for: ' + selected_web_service.service_name)
                 auth_passed = True
@@ -186,6 +188,18 @@ class WebServiceController(object):
         else:
             return BaseWebService.ServiceResponse(resp_code=HTTPStatus.NOT_FOUND)
 
+    def __get_web_service_that_owns_path(self, path, web_service_candidates):
+        """ Gets the web service that owns the path. If no web service owns the given path then the next available web
+            service that comes close is returned instead. For example if a web service owns http://example.com/api/ then
+            anything under that path which isn't specified explicitly will return that web service such as
+            http://example.com/api/test or http://example.com/api/some/path/under/this/one.
+        """
+        if path in web_service_candidates:
+            return web_service_candidates[path]
+        elif path != '/':
+            return self.__get_web_service_that_owns_path(os.path.dirname(path), web_service_candidates)
+        else:
+            return None
 
     def __instantiate_web_services(self, web_service_classes):
         """ Default initialises all of the WebServices that have been imported.
