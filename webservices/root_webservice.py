@@ -7,7 +7,8 @@ WEB_SERVICE_CONFIG = {BaseWebService.CONF_ITM_NAME: 'Root',
                          BaseWebService.CONF_ITM_ENABLED: 'true',
                          BaseWebService.CONF_ITM_OWNED_URLS: 
                              {'/': 
-                                 {BaseWebService.CONF_ITM_ALLOW_METH : ['GET']}
+                                 {BaseWebService.CONF_ITM_ALLOW_METH : ['GET'],
+                                  BaseWebService.CONF_ITM_FULL_MATCH_ONLY : 'true'}
                              }
                      }
 

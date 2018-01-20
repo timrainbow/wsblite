@@ -170,6 +170,10 @@ class WebServiceController(object):
             # Remove trailing slashes
             path = path[:-1]
 
+        if '//' in path:
+            # Double slash in the URL path should give a BAD REQUEST
+            return BaseWebService.ServiceResponse(resp_code=HTTPStatus.BAD_REQUEST)
+
         selected_web_service = self.__get_web_service_that_owns_path(path, self._web_service_lookup[method])
 
         if selected_web_service:
@@ -188,16 +192,25 @@ class WebServiceController(object):
         else:
             return BaseWebService.ServiceResponse(resp_code=HTTPStatus.NOT_FOUND)
 
-    def __get_web_service_that_owns_path(self, path, web_service_candidates):
+    def __get_web_service_that_owns_path(self, path, web_service_candidates, path_is_trimmed=False):
         """ Gets the web service that owns the path. If no web service owns the given path then the next available web
             service that comes close is returned instead. For example if a web service owns http://example.com/api/ then
             anything under that path which isn't specified explicitly will return that web service such as
             http://example.com/api/test or http://example.com/api/some/path/under/this/one.
         """
         if path in web_service_candidates:
-            return web_service_candidates[path]
-        elif path != '/':
-            return self.__get_web_service_that_owns_path(os.path.dirname(path), web_service_candidates)
+            selected_web_service = web_service_candidates[path]
+
+            if path_is_trimmed:
+                # Only return the web service if it allows the client to not provide an exact match
+                if not selected_web_service.owned_path_must_be_exact(path):
+                    return selected_web_service
+            else:
+                return selected_web_service
+
+        if path != '/':
+            return self.__get_web_service_that_owns_path(os.path.dirname(path), web_service_candidates,
+                                                         path_is_trimmed=True)
         else:
             return None
 

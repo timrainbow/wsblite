@@ -63,7 +63,10 @@ class BaseWebService(object):
     CONF_ITM_NAME       = 'service_name'
     CONF_ITM_OWNED_URLS = 'owned_urls'
     CONF_ITM_ENABLED    = 'service_enabled'
-    CONF_ITM_ALLOW_METH = 'allowed_methods'
+
+    # Owned URLs
+    CONF_ITM_ALLOW_METH      = 'allowed_methods'
+    CONF_ITM_FULL_MATCH_ONLY = 'full_match_only'
 
     # Auth config items
     CONF_ITM_AUTH_ALL_ENABLED    = 'auth_all_enabled'
@@ -203,6 +206,20 @@ class BaseWebService(object):
         credentials = username + ':' + password
 
         return base64.b64encode(credentials.encode()).decode()
+
+    def owned_path_must_be_exact(self, path):
+        """ Checks if this web service only allows clients to access the given path if provided exactly i.e. it cannot
+            have extra levels underneath it.
+        """
+        path_must_be_exact = False
+
+        url_config = self.__get_url_config(path)
+
+        if url_config and BaseWebService.CONF_ITM_FULL_MATCH_ONLY in url_config:
+            if url_config[BaseWebService.CONF_ITM_FULL_MATCH_ONLY].lower() == 'true':
+                path_must_be_exact = True
+
+        return path_must_be_exact
 
     def __get_url_config(self, path):
         """ Gets the url config for a given url path. If the exact path doesn't match then the closest web service to it

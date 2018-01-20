@@ -169,6 +169,9 @@ A dictionary containing the url paths to register (as the keys in the dictionary
 **BaseWebService.CONF_ITM_ALLOW_METH**
 A list of allowed HTTP methods for a particular url path. The list can contain any combination of `GET`, `PUT`, `POST` and `DELETE`. It's possible for multiple web services to register their interest in the same url path **if** the allowed HTTP methods do **not** overlap.
 
+**BaseWebService.CONF_ITM_FULL_MATCH_ONLY**
+Set this to `true` for a given owned URL if the client must provide the path exactly for this web service to be notified. If `false` (the default when not supplied), then paths underneath an owned URL will still cause this web service to be notified. For example, `false` would cause http://example.com/logs/temperature to notify a web service that the owned URL http://example.com/logs/
+
 #### Basic Authentication Config
 
 **BaseWebService.CONF_ITM_AUTH_ALL_ENABLED**

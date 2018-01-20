@@ -9,9 +9,11 @@ WEB_SERVICE_CONFIG = {BaseWebService.CONF_ITM_NAME: 'Example WebService',
                       BaseWebService.CONF_ITM_AUTH_ALL_ENABLED: 'true',
                       BaseWebService.CONF_ITM_OWNED_URLS:
                           {'/list_directory':
-                              {BaseWebService.CONF_ITM_ALLOW_METH : ['GET']},
+                              {BaseWebService.CONF_ITM_ALLOW_METH : ['GET'],
+                               BaseWebService.CONF_ITM_FULL_MATCH_ONLY : 'true'},
                            '/list_directory_with_authentication':
                               {BaseWebService.CONF_ITM_ALLOW_METH : ['GET'],
+                               BaseWebService.CONF_ITM_FULL_MATCH_ONLY : 'true',
                                BaseWebService.CONF_ITM_AUTH_BASIC_ENABLED: 'true',
                                BaseWebService.CONF_ITM_AUTH_USERNAME: 'admin',
                                BaseWebService.CONF_ITM_AUTH_PASSWORD: 'MySecretPassword'
