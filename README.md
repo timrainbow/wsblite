@@ -120,6 +120,7 @@ BaseWebService.CONF_ITM_AUTH_ALL_ENABLED: '<true/false>',
 BaseWebService.CONF_ITM_OWNED_URLS: 
     {'<url path web service is interested in>': 
         {BaseWebService.CONF_ITM_ALLOW_METH : <list of allowed HTTP Methods>,
+         BaseWebService.CONF_ITM_FULL_MATCH_ONLY : '<true/false>',
          BaseWebService.CONF_ITM_AUTH_BASIC_ENABLED: '<true/false>',
          BaseWebService.CONF_ITM_AUTH_USERNAME: '<username needed for this path>',
          BaseWebService.CONF_ITM_AUTH_PASSWORD: '<password needed for this path>'}
@@ -133,7 +134,8 @@ BaseWebService.CONF_ITM_NAME: 'My Awesome Web Service',
 BaseWebService.CONF_ITM_ENABLED: 'true',
 BaseWebService.CONF_ITM_OWNED_URLS: 
     {'/my_awesome_web_service': 
-        {BaseWebService.CONF_ITM_ALLOW_METH : ['GET', 'POST', 'DELETE']}
+        {BaseWebService.CONF_ITM_ALLOW_METH : ['GET', 'POST', 'DELETE'],
+         BaseWebService.CONF_ITM_FULL_MATCH_ONLY : 'true'}
     }
 }
 ```
@@ -146,6 +148,7 @@ BaseWebService.CONF_ITM_AUTH_ALL_ENABLED: 'true',
 BaseWebService.CONF_ITM_OWNED_URLS: 
     {'/my_awesome_web_service': 
         {BaseWebService.CONF_ITM_ALLOW_METH : ['GET', 'POST', 'DELETE'],
+         BaseWebService.CONF_ITM_FULL_MATCH_ONLY : 'true',
          BaseWebService.CONF_ITM_AUTH_BASIC_ENABLED: 'true',
          BaseWebService.CONF_ITM_AUTH_USERNAME: 'admin',
          BaseWebService.CONF_ITM_AUTH_PASSWORD: 'MySecretPassword'}
