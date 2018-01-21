@@ -1,4 +1,5 @@
 import http.server
+import urllib.parse
 import json
 import os
 import logging
@@ -30,7 +31,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         if content_type == 'application/json':
             message_body = json.loads(raw_message_body.decode())
         else:
-            message_body = raw_message_body
+            message_body = urllib.parse.unquote_plus(raw_message_body.decode())
         
         return (content_type, message_body)
     
