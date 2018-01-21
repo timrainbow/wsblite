@@ -166,10 +166,6 @@ class WebServiceController(object):
             handle the client's request. 
         """
 
-        while path != '/' and path[-1:] == '/':
-            # Remove trailing slashes
-            path = path[:-1]
-
         if '//' in path:
             # Double slash in the URL path should give a BAD REQUEST
             return BaseWebService.ServiceResponse(resp_code=HTTPStatus.BAD_REQUEST)
