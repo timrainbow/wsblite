@@ -60,7 +60,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 logging.info('Client requested favicon but nothing found here: ' + favicon_path)
         else:
             
-            result = controller.perform_client_request('GET', self.path, self.headers)
+            result = controller.perform_client_request(self, 'GET', self.path, self.headers)
             self.__handle_result(result)
             
     def do_POST(self):
@@ -69,7 +69,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         (payload_type, payload_content) = self.get_payload()
         
         controller = HTTPRequestHandler.controller
-        result = controller.perform_client_request('POST', self.path, self.headers, payload_type,
+        result = controller.perform_client_request(self, 'POST', self.path, self.headers, payload_type,
                                                    payload_content)
         self.__handle_result(result)
         
@@ -79,7 +79,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         (payload_type, payload_content) = self.get_payload()
         
         controller = HTTPRequestHandler.controller
-        result = controller.perform_client_request('PUT', self.path, self.headers, payload_type,
+        result = controller.perform_client_request(self, 'PUT', self.path, self.headers, payload_type,
                                                    payload_content)
         self.__handle_result(result)
         
@@ -87,7 +87,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         """ Serves a DELETE request.
         """
         controller = HTTPRequestHandler.controller
-        result = controller.perform_client_request('DELETE', self.path, self.headers)
+        result = controller.perform_client_request(self, 'DELETE', self.path, self.headers)
         self.__handle_result(result)
         
             
@@ -169,7 +169,7 @@ class WebServiceController(object):
     def parse_response(self, raw_response):
         return self.__server.RequestHandlerClass.parse_response(raw_response)
     
-    def perform_client_request(self, method, path, headers, payload_type=None, payload_content=None):
+    def perform_client_request(self, handler, method, path, headers, payload_type=None, payload_content=None):
         """ Called when the HTTPRequestHandler receives a request from a client.
             This is where the controller looks to see which web service should
             handle the client's request. 
@@ -191,8 +191,7 @@ class WebServiceController(object):
             if not auth_passed:
                 return selected_web_service.request_authentication(realm=selected_web_service.service_name)
 
-            return selected_web_service.perform_client_request(method, path, headers,
-                                                               payload_type,
+            return selected_web_service.perform_client_request(handler, method, path, headers, payload_type,
                                                                payload_content)
         else:
             return BaseWebService.ServiceResponse(resp_code=HTTPStatus.NOT_FOUND)

@@ -23,7 +23,7 @@ class RootWebService(BaseWebService):
         super().__init__(WEB_SERVICE_CONFIG)
         self.html_body = ''
     
-    def perform_client_request(self, method, path, headers, payload_type, payload_content):
+    def perform_client_request(self, handler, method, path, headers, payload_type, payload_content):
         return self.ServiceResponse(payload=self.html_body)
     
     def initialise(self, web_services_loaded):

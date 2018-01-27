@@ -35,7 +35,7 @@ class ListDirWebService(BaseWebService):
     def __init__(self):
         super().__init__(WEB_SERVICE_CONFIG)
     
-    def perform_client_request(self, method, path, headers, payload_type, payload_content):
+    def perform_client_request(self, handler, method, path, headers, payload_type, payload_content):
         """ Return the contents of the current working directory when a client request comes in for a url path we
             registered for. Authentication is verified before this method is called if the client chose the
             authentication option.
