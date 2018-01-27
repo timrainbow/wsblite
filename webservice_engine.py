@@ -3,9 +3,17 @@ import urllib.parse
 import json
 import os
 import logging
+import socketserver
 
 from threading import Thread
 from webcommon.base_webservice import BaseWebService, HTTPStatus
+
+
+class ThreadedHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
+    """ Allows support for asynchronous behaviour (a thread per request)
+    """
+    allow_reuse_address = True
+    daemon_threads = True
 
 
 class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
@@ -254,7 +262,7 @@ class WebServiceController(object):
         """ Starts the HTTP server on the configured port.
         """
         self._server_address = ('', self._port)
-        self.__server = http.server.HTTPServer(self._server_address, HTTPRequestHandler)
+        self.__server = ThreadedHTTPServer(self._server_address, HTTPRequestHandler)
         # Set ourselves onto the server so it can callback to us
         self.__server.RequestHandlerClass.set_controller(self)
         sa = self.__server.socket.getsockname()
