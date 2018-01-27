@@ -97,21 +97,21 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         
     def __send_response(self, service_resp):
         """ Sends a HTTP response back to the user with a format defined by the
-            caller.
+            caller. If service_resp is None then nothing is sent back to the client.
         """
- 
-        self.send_response(service_resp.resp_code)
-        if service_resp.payload:
-            self.send_header("Content-type", service_resp.content_type)
-            self.send_header("Content-Length", len(service_resp.payload))
+        if service_resp:
+            self.send_response(service_resp.resp_code)
+            if service_resp.payload:
+                self.send_header("Content-type", service_resp.content_type)
+                self.send_header("Content-Length", len(service_resp.payload))
 
-        # Send any additional headers the user has specifically requested.
-        for header_key, header_value in service_resp.add_headers.items():
-            self.send_header(header_key, header_value)
+            # Send any additional headers the user has specifically requested.
+            for header_key, header_value in service_resp.add_headers.items():
+                self.send_header(header_key, header_value)
 
-        self.end_headers()
-        
-        self.wfile.write(service_resp.payload)
+            self.end_headers()
+
+            self.wfile.write(service_resp.payload)
 
 
 class WebServiceController(object):

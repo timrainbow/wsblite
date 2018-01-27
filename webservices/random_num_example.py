@@ -100,4 +100,16 @@ class RandomNumWebService(BaseBackgroundWebService):
 
         return self.ServiceResponse(payload=str(answer))
 
+    def start(self):
+        """ You must call super().start() if you override this method as it is
+            responsible for running your background process.
+        """
+        super().start()
+        logging.info('RandomNumWebService Start')
 
+    def stop(self):
+        """ You must call super().stop() if you override this method as it is
+            responsible for stopping your background process.
+        """
+        super().stop()
+        logging.info('RandomNumWebService Stop')
