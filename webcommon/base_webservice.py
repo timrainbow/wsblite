@@ -149,10 +149,9 @@ class BaseWebService(object):
 
         return allowed_http_methods
 
-    def check_authentication(self, path, headers):
-        """ Checks if the particular url owned by this web service requires authentication or not. If it does, it will
-            check the Authorization header against the stored username and password. Returns True if the client validated
-            (either by supplying the right credentials or if authentication is disabled for the url being accessed).
+    def is_authentication_required(self, path):
+        """ Checks if the particular url owned by this web service requires authentication or not. Returns True if
+            authentication is requested to access the path.
         """
         logging.debug('Verifying authentication requirements of owned urls are met')
 
@@ -168,15 +167,22 @@ class BaseWebService(object):
                 check_credentials = False
         elif self.CONF_ITM_AUTH_USERNAME in url_config and self.CONF_ITM_AUTH_PASSWORD in url_config:
             if url_config[self.CONF_ITM_AUTH_USERNAME] and url_config[self.CONF_ITM_AUTH_PASSWORD]:
-                logging.debug('Authentication not specifically enabled but a username and password have been supplied - '
-                             'assuming authentication required (provide ' + self.CONF_ITM_AUTH_BASIC_ENABLED + ' to '
-                             'silence this message)')
+                logging.debug(
+                    'Authentication not specifically enabled but a username and password have been supplied - '
+                    'assuming authentication required (provide ' + self.CONF_ITM_AUTH_BASIC_ENABLED + ' to '
+                                                                                                      'silence this message)')
                 check_credentials = True
         else:
             check_credentials = False
 
+        return check_credentials
+
+    def check_authentication(self, path, headers):
+        """ Checks the Authorization header against the stored username and password. Returns True if the client validated
+            (either by supplying the right credentials or if authentication is disabled for the url being accessed).
+        """
         auth_passed = False
-        if check_credentials:
+        if self.is_authentication_required(path):
             logging.debug('Authentication required')
             auth_header = headers.get('Authorization')
             if auth_header:
